@@ -9,6 +9,13 @@ The network structure can be volatile and changed dynamically. By default it use
 Zn network provides "network layer" according to [OSI model](https://en.wikipedia.org/wiki/OSI_model).
 On top of Zn network, you can build transport protocol, similar to TCP/UDP e.t.c.
 
+## Installation
+Run this command from terminal:
+
+```
+hpm install zn
+```
+
 ## API
 * `zn.connect()`
 
