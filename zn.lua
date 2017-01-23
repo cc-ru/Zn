@@ -23,46 +23,59 @@ local computer = require("computer")
 local modem = com.modem
 local zn = {}
 
--- This is default data for global Zn network
--- You can create local sub-network (not connected with global net),
--- changing port and prefix
 local PORT = 419
-local PREFIX = "~ZN~"
+local PREFIX = "Zn"
+local CODES = {
+  ping = "Zn/ping",
+  send = "Zn/send"
+}
 
--- How long does this node remember transferred message hash (in-game seconds)
--- Used to kill all possible dublicates
+-- How long does this node remembers transferred message hash (in-game seconds)
+-- (Used to kill all possible dublicates)
 local HASHLIFETIME = 43200
 
 
 -- Session ---------------------------------------------------------------------
 
--- list of last messages hashes
 local hashes = {}
 
-local check = function(hash)
+local function hashgen(time, data)
+  return string.char(math.random(0, 255), math.random(0, 255),
+                     math.random(0, 255), math.random(0, 255))
+end
+
+local function check(hash)
   local time = os.time()
-  -- clear hashes table
   for k, v in pairs(hashes) do
-    if time - v > HASHLIFETIME then hashes[k] = nil end
+    if time - v > HASHLIFETIME then
+      hashes[k] = nil
+    end
   end
-  -- check
   return hashes[hash] == nil
 end
 
-local listener = function(name, receiver, sender, port, distance,
-                          prefix, address, hash, body)
-  -- check if this is Zn message
+local function send(selfAddress, address, message, hash, code)
+  local hash = hash or hashgen(os.time(), message)
+  hashes[hash] = os.time()
+  modem.broadcast(PORT, PREFIX, code, address, selfAddress, hash, message)
+end
+
+local function listener(name, receiver, sender, port, distance,
+                        prefix, code, recvAddr, sendAddr, hash, body)
   if port == PORT and prefix == PREFIX then
-    -- check message hash
     if check(hash) then
-      -- check if this message was for us
-      if address == receiver or address == "all" then
-        -- create event for user
-        computer.pushSignal("zn_message", body)
+      if recvAddr == receiver or recvAddr == "" then
+        if code == CODES.send then
+          computer.pushSignal("zn_message", body)
+          if recvAddr == receiver then
+            send(receiver, sendAddr, hash, nil, CODES.ping)
+          end
+        else
+          computer.pushSignal("zn_pong", body)
+        end
       end
-      -- transfer this message, if necessary
-      if address ~= receiver then
-        zn.send(address, body, hash)
+      if recvAddr ~= receiver then
+        send(receiver, recvAddr, body, hash, CODES.send)
       end
     end
   end
@@ -70,35 +83,30 @@ end
 
 zn.connect = function()
   math.randomseed(os.time())
-  -- listen to Zn messages
   modem.open(PORT)
   event.listen("modem_message", listener)
 end
 
 zn.disconnect = function()
-  -- unregister our listener
   modem.close(PORT)
   event.ignore("modem_message", listener)
 end
 
-
 -- Messages --------------------------------------------------------------------
 
--- fake but fast =)
-local hashgen = function(data)
-  return math.random()
-end
-
-zn.send = function(address, message, hash)
-  local hash = hash or hashgen(message)
-  -- remember our hash (we don't want to get our message back)
+zn.send = function(address, message, timeout)
+  timeout = timeout or 5
+  local hash = hashgen(os.time(), message)
   hashes[hash] = os.time()
-  -- send message
-  modem.broadcast(PORT, PREFIX, address, hash, message)
+  send(modem.address, address, message, hash, CODES.send)
+  return event.pull(timeout, "zn_pong", hash) == "zn_pong"
 end
 
-zn.broadcast = function(message, hash)
-  zn.send("all", message, hash)
+zn.broadcast = function(message)
+  local hash = hashgen(os.time(), message)
+  hashes[hash] = os.time()
+  send(modem.address, "", message, hash, CODES.send)
+  return true
 end
 
 return zn

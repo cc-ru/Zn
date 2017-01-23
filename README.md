@@ -1,7 +1,7 @@
 # Zn
 A minimalistic OpenComputers p2p network.
 
-All Zn traffic is transferred by members of network. No central server exists.
+All Zn traffic is transferred by members of network. No central server is needed.
 The library dispatches messages, and generates events for messages addressed to cliend or broadcasted to entire net.
 
 The network structure can be volatile and changed dynamically. By default it uses `419` modem port to communicate.
