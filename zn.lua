@@ -33,6 +33,8 @@ local CODES = {
 -- (Used to kill all possible dublicates)
 local HASHLIFETIME = 43200
 
+local isConnected = false
+
 
 -- Session ---------------------------------------------------------------------
 
@@ -99,14 +101,24 @@ local function listener(name, receiver, sender, port, distance,
 end
 
 zn.connect = function()
+  if isConnected then
+    return false
+  end
   math.randomseed(getTime())
   modem.open(PORT)
   event.listen("modem_message", listener)
+  isConnected = true
+  return true
 end
 
 zn.disconnect = function()
+  if not isConnected then
+    return false
+  end
   modem.close(PORT)
   event.ignore("modem_message", listener)
+  isConnected = false
+  return true
 end
 
 zn.modem = com.modem
