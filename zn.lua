@@ -25,8 +25,10 @@ local zn = {}
 
 local PORT = 419
 local CODES = {
+  ack = "Zn/ack",
+  send = "Zn/send",
   ping = "Zn/ping",
-  send = "Zn/send"
+  pong = "Zn/pong"
 }
 
 -- How long does this node remember transferred message hash (in-game seconds)
@@ -72,16 +74,28 @@ end
 local function listener(name, receiver, sender, port, distance,
                         code, recvAddr, sendAddr, hash, body)
   if receiver == zn.modem.address then
-    if port == PORT and (code == CODES.send or code == CODES.ping) then
+    if port == PORT and (
+        code == CODES.send or
+        code == CODES.pong or
+        code == CODES.ping or
+        code == CODES.ack) then
+      if code == CODES.ping then
+        computer.pushSignal("zn_ping", sender, distance)
+        modem.send(sender, PORT, CODES.pong)
+        return true
+      end
+      if code == CODES.pong then
+        computer.pushSignal("zn_pong", sender, distance)
+      end
       if check(hash) then
         if recvAddr == zn.modem.address or recvAddr == "" then
           if code == CODES.send then
             computer.pushSignal("zn_message", body, recvAddr, sendAddr)
             if recvAddr == receiver then
-              send(zn.modem.address, sendAddr, hash, nil, CODES.ping)
+              send(zn.modem.address, sendAddr, hash, nil, CODES.pong)
             end
-          else
-            computer.pushSignal("zn_pong", body, recvAddr, sendAddr)
+          elseif code == CODES.ack then
+            computer.pushSignal("zn_ack", body, recvAddr, sendAddr)
           end
         end
         if recvAddr ~= zn.modem.address then
@@ -127,6 +141,10 @@ end
 zn.broadcast = function(message)
   send(modem.address, "", message, nil, CODES.send)
   return true
+end
+
+zn.ping = function()
+  modem.broadcast(PORT, CODES.ping)
 end
 
 return zn
