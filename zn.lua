@@ -67,32 +67,24 @@ local function send(selfAddress, address, message, hash, code)
   local hash = hash or hashgen(getTime(), message)
   hashes[hash] = computer.uptime()
   modem.broadcast(PORT, code, address, selfAddress, hash, message)
-  -- print("sent", code, address, selfAddress, hash, message)
 end
 
 local function listener(name, receiver, sender, port, distance,
                         code, recvAddr, sendAddr, hash, body)
-  -- print("caught", code, recvAddr, sendAddr, hash, body)
   if receiver == zn.modem.address then
     if port == PORT and (code == CODES.send or code == CODES.ping) then
-      -- print("prefix&port")
       if check(hash) then
-        -- print("checked")
         if recvAddr == zn.modem.address or recvAddr == "" then
-          -- print("4me")
           if code == CODES.send then
-            -- print("msg4me")
-            computer.pushSignal("zn_message", body)
+            computer.pushSignal("zn_message", body, recvAddr, sendAddr)
             if recvAddr == receiver then
               send(zn.modem.address, sendAddr, hash, nil, CODES.ping)
             end
           else
-            -- print("ping4me")
-            computer.pushSignal("zn_pong", body)
+            computer.pushSignal("zn_pong", body, recvAddr, sendAddr)
           end
         end
         if recvAddr ~= zn.modem.address then
-          -- print("not4me")
           send(sendAddr, recvAddr, body, hash, CODES.send)
         end
       end
