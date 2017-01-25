@@ -20,6 +20,11 @@ Run this command from terminal:
 hpm install zn
 ```
 
+The EEPROM version is also bundled with the package, stored in
+`/usr/share/zn/eeprom.lua`.
+
+Flash it using the `flash` utility included in OpenOS.
+
 ## Functions
 * `zn.connect():boolean`
 

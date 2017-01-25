@@ -99,7 +99,7 @@ local function listener(name, receiver, sender, port, distance,
         if recvAddr == zn.modem.address or recvAddr == "" then
           if code == CODES.send then
             comp.pushSignal("zn_message", body, recvAddr, sendAddr)
-            if recvAddr == receiver and parseFlags(flags).ACK then
+            if recvAddr == zn.modem.address and parseFlags(flags).ACK then
               send(zn.modem.address, sendAddr, hash, nil, CODES.ack, packFlags {})
             end
           elseif code == CODES.ack then
@@ -124,7 +124,7 @@ zn.send = function(address, message, timeout)
     flags.ACK = nil
   end
   local hash = hashgen(getTime(), message)
-  send(modem.address, address, message, hash, CODES.send, packFlags(flags))
+  send(zn.modem.address, address, message, hash, CODES.send, packFlags(flags))
   if timeout == false then
     return true
   end
@@ -132,12 +132,12 @@ zn.send = function(address, message, timeout)
 end
 
 zn.broadcast = function(message)
-  send(modem.address, "", message, nil, CODES.send, packFlags {})
+  send(zn.modem.address, "", message, nil, CODES.send, packFlags {})
   return true
 end
 
 zn.ping = function()
-  modem.broadcast(PORT, CODES.ping)
+  zn.modem.broadcast(PORT, CODES.ping)
 end
 
 math.randomseed(getTime())
