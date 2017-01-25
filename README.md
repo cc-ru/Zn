@@ -7,7 +7,7 @@ a specific node or broadcast to all nodes.
 
 The network structure can be changed dynamically.
 
-It uses port `419` for communicatation.
+It uses port `419` for communication.
 
 Zn network provides "network layer" according to
 [OSI model](https://en.wikipedia.org/wiki/OSI_model).
