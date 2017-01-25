@@ -75,7 +75,7 @@ end
 local function send(selfAddress, address, message, hash, code, flags)
   local hash = hash or hashgen(getTime(), message)
   hashes[hash] = comp.uptime()
-  modem.broadcast(PORT, code, address, selfAddress, hash, flags, message)
+  zn.modem.broadcast(PORT, code, address, selfAddress, hash, flags, message)
 end
 
 local function listener(name, receiver, sender, port, distance,
@@ -88,7 +88,7 @@ local function listener(name, receiver, sender, port, distance,
         code == CODES.ack) then
       if code == CODES.ping then
         comp.pushSignal("zn_ping", sender, distance)
-        modem.send(sender, PORT, CODES.pong)
+        zn.modem.send(sender, PORT, CODES.pong)
         return true
       end
       if code == CODES.pong then
@@ -107,7 +107,7 @@ local function listener(name, receiver, sender, port, distance,
           end
         end
         if recvAddr ~= zn.modem.address then
-          send(sendAddr, recvAddr, body, hash, CODES.send, flags)
+          send(sendAddr, recvAddr, body, hash, code, flags)
         end
       end
     end
@@ -128,7 +128,7 @@ zn.send = function(address, message, timeout)
   if timeout == false then
     return true
   end
-  return event.pull(timeout, "zn_ack", hash) == "zn_ack"
+  return true
 end
 
 zn.broadcast = function(message)

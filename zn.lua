@@ -132,7 +132,7 @@ local function listener(name, receiver, sender, port, distance,
           end
         end
         if recvAddr ~= zn.modem.address then
-          send(sendAddr, recvAddr, body, hash, CODES.send, flags)
+          send(sendAddr, recvAddr, body, hash, code, flags)
         end
       end
     end
