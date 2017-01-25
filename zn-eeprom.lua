@@ -114,7 +114,7 @@ local function listener(name, receiver, sender, port, distance,
   end
 end
 
-zn.modem = com.modem
+zn.modem = modem
 
 zn.send = function(address, message, timeout)
   local flags = {ACK = true}
