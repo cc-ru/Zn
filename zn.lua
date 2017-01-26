@@ -1,4 +1,3 @@
--- ~ Zn ~ 0.1.0 ~
 -- Minimalistic p2p network for OpenComputers
 --
 -- Copyright 2017 Figercomp, Totoro
