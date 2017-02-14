@@ -24,15 +24,12 @@ local zn = {}
 
 local PORT = 419
 local CODES = {
-  ack = "Zn/ack",
   send = "Zn/send",
   ping = "Zn/ping",
   pong = "Zn/pong"
 }
 
-local FLAGS = {
-  ACK = "\x50"
-}
+local FLAGS = {}
 
 -- How long does this node remember transferred message hash (in-game seconds)
 -- (Used to kill all possible dublicates)
@@ -108,8 +105,7 @@ local function listener(name, receiver, sender, port, distance,
     if port == PORT and (
         code == CODES.send or
         code == CODES.pong or
-        code == CODES.ping or
-        code == CODES.ack) then
+        code == CODES.ping) then
       if code == CODES.ping then
         computer.pushSignal("zn_ping", sender, distance)
         modem.send(sender, PORT, CODES.pong)
@@ -123,11 +119,6 @@ local function listener(name, receiver, sender, port, distance,
         if recvAddr == zn.modem.address or recvAddr == "" then
           if code == CODES.send then
             computer.pushSignal("zn_message", body, recvAddr, sendAddr)
-            if recvAddr == receiver and parseFlags(flags).ACK then
-              send(zn.modem.address, sendAddr, hash, nil, CODES.ack, packFlags {})
-            end
-          elseif code == CODES.ack then
-            computer.pushSignal("zn_ack", body, recvAddr, sendAddr)
           end
         end
         if recvAddr ~= zn.modem.address then
@@ -163,19 +154,10 @@ zn.modem = com.modem
 
 -- Messages --------------------------------------------------------------------
 
-zn.send = function(address, message, timeout)
-  local flags = {ACK = true}
-  if timeout == nil then
-    timeout = 5
-  elseif timeout == false then
-    flags.ACK = nil
-  end
+zn.send = function(address, message)
   local hash = hashgen(getTime(), message)
-  send(modem.address, address, message, hash, CODES.send, packFlags(flags))
-  if timeout == false then
-    return true
-  end
-  return event.pull(timeout, "zn_ack", hash) == "zn_ack"
+  send(modem.address, address, message, hash, CODES.send, packFlags {})
+  return true
 end
 
 zn.broadcast = function(message)

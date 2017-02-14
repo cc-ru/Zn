@@ -31,15 +31,9 @@ Flash it using the `flash` utility included in OpenOS.
 Registers Zn network listener. This makes a computer a node of Zn network,
 so it can send and receive network messages.
 
-* `zn.send(address: string, message: string, [timeout: boolean/number]):boolean`
+* `zn.send(address: string, message: string):boolean`
 
 Sends the `message` to `address` (modem address of a node).
-
-You can set the timeout of acknowledgement, measured in seconds, to arbitrary
-number, or `false` to disable acknowledgement at all for this message.
-
-This function returns `true` if no acknowledgement is requested, or the
-receiving node sent an ACK message signalling that it has received the message.
 
 * `zn.ping()`
 
@@ -59,10 +53,6 @@ Disconnects from the network.
 * `zn_message(message: string, receiverAddr: string, senderAddr: string)`
 
 The client has received a Zn message.
-
-* `zn_ack(hash: string, receiverAddr: string, senderAddr: string)`
-
-An acknowledgement for some message has been received.
 
 * `zn_ping(senderAddr: string, distance: number)`
 

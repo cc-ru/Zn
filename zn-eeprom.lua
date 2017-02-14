@@ -6,14 +6,12 @@ local zn = {}
 
 local PORT = 419
 local CODES = {
-  ack = "Zn/ack",
   send = "Zn/send",
   ping = "Zn/ping",
   pong = "Zn/pong"
 }
 
 local FLAGS = {
-  ACK = "\x50"
 }
 
 local HASHLIFETIME = 43200
@@ -84,8 +82,7 @@ local function listener(name, receiver, sender, port, distance,
     if port == PORT and (
         code == CODES.send or
         code == CODES.pong or
-        code == CODES.ping or
-        code == CODES.ack) then
+        code == CODES.ping) then
       if code == CODES.ping then
         comp.pushSignal("zn_ping", sender, distance)
         zn.modem.send(sender, PORT, CODES.pong)
@@ -99,11 +96,6 @@ local function listener(name, receiver, sender, port, distance,
         if recvAddr == zn.modem.address or recvAddr == "" then
           if code == CODES.send then
             comp.pushSignal("zn_message", body, recvAddr, sendAddr)
-            if recvAddr == zn.modem.address and parseFlags(flags).ACK then
-              send(zn.modem.address, sendAddr, hash, nil, CODES.ack, packFlags {})
-            end
-          elseif code == CODES.ack then
-            comp.pushSignal("zn_ack", body, recvAddr, sendAddr)
           end
         end
         if recvAddr ~= zn.modem.address then
@@ -116,18 +108,9 @@ end
 
 zn.modem = modem
 
-zn.send = function(address, message, timeout)
-  local flags = {ACK = true}
-  if timeout == nil then
-    timeout = 5
-  elseif timeout == false then
-    flags.ACK = nil
-  end
+zn.send = function(address, message)
   local hash = hashgen(getTime(), message)
-  send(zn.modem.address, address, message, hash, CODES.send, packFlags(flags))
-  if timeout == false then
-    return true
-  end
+  send(zn.modem.address, address, message, hash, CODES.send, packFlags {})
   return true
 end
 
