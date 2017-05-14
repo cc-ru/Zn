@@ -15,6 +15,7 @@ local FLAGS = {
 }
 
 local HASHLIFETIME = 43200
+local MAXHASHCOUNT = 500
 local isConnected = false
 
 local hashes = {}
@@ -28,12 +29,38 @@ local function hashgen(time, data)
                      math.random(0, 255), math.random(0, 255))
 end
 
+local function dateSorted(tbl)
+  local values = {}
+  for k in pairs(tbl) do
+    table.insert(values, k)
+  end
+  table.sort(values, function(lhs, rhs)
+    return tbl[lhs] < tbl[rhs]
+  end)
+  local i = 0
+  return function()
+    i = i + 1
+    if not values[i] then
+      return nil
+    end
+    return values[i], tbl[values[i]]
+  end
+end
+
 local function check(hash)
   local time = comp.uptime()
+  local len = 0
   for k, v in pairs(hashes) do
+    len = len + 1
     if time - v > HASHLIFETIME then
+      len = len - 1
       hashes[k] = nil
     end
+  end
+  while len > MAXHASHCOUNT do
+    local k = dateSorted(hashes)()
+    table.remove(hashes, k)
+    len = len - 1
   end
   if not hashes[hash] then
     hashes[hash] = comp.uptime()
